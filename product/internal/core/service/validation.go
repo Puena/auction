@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/Puena/auction-house-product/internal/core/dto"
+	"github.com/Puena/auction/product/internal/core/dto"
 )
 
 type serviceValidationError struct {

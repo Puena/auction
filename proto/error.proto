@@ -5,8 +5,7 @@ package auction;
 
 import "google/protobuf/timestamp.proto";
 
-
-option go_package = "/error";
+option go_package = "/auction";
 
 message EventError {
     string stream_name = 1;

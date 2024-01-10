@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/Puena/auction-house-product/internal/core/domain"
-	"github.com/Puena/auction-house-product/internal/core/dto"
+	"github.com/Puena/auction/product/internal/core/domain"
+	"github.com/Puena/auction/product/internal/core/dto"
 )
 
 func mapProductDtoToDomain(product dto.Product) domain.Product {

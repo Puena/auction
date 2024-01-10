@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Puena/auction-house-product/internal/core/domain"
-	"github.com/Puena/auction-house-product/internal/core/dto"
-	"github.com/Puena/auction-house-product/internal/core/ports"
+	"github.com/Puena/auction/product/internal/core/domain"
+	"github.com/Puena/auction/product/internal/core/dto"
+	"github.com/Puena/auction/product/internal/core/ports"
 	"github.com/oklog/ulid/v2"
 )
 

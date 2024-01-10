@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/Puena/auction-house-product/internal/core/domain"
+	"github.com/Puena/auction/product/internal/core/domain"
 )
 
 // ProductRepository represent product repository port.

@@ -5,7 +5,7 @@ package auction;
 import "google/protobuf/timestamp.proto";
 
 
-option go_package = "/product";
+option go_package = "/auction";
 
 /*
     Product message represent a product.

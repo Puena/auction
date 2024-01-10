@@ -3,7 +3,7 @@ syntax = "proto3";
 package auction;
 
 
-option go_package = "/account";
+option go_package = "/auction";
 
 /*
     AccountStatus represent the status of the account.

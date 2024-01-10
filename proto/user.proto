@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package auction;
 
-option go_package = "/user";
+option go_package = "/auction";
 
 /*
     User messages represent user data.

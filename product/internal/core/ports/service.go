@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/Puena/auction-house-product/internal/core/dto"
+	"github.com/Puena/auction/product/internal/core/dto"
 )
 
 // Service is the interface that wraps the basic methods of the service.
