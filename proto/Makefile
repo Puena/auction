@@ -23,6 +23,6 @@ protobuild:
 # 	--experimental_allow_proto3_optional
 	@echo "Generate markdown docs from proto ..."
 	@protoc \
-	--doc_out=$(go_dir) \
+	--doc_out=$(proto_dir) \
 	--doc_opt=markdown,README.md $(proto_dir)/*.proto \
 	--experimental_allow_proto3_optional
