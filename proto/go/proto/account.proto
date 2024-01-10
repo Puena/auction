@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package auction;
+
+option go_package = "github.com/Puena/autction-messages-proto/auction";
+
+/*
+    AccountStatus represent the status of the account.
+*/
+
+/*
+    Account represent event message for user account.
+*/
+message Account {
+    string id = 1;
+    string user_id = 2;
+    string reserved_funds = 3;
+    string available_funds = 4;
+    enum Status {
+            UNKNOWN = 0;
+            ACTIVE = 1;
+            INACTIVE = 2;
+    }
+    Status status = 5;
+    string created_at = 6;
+}
+
+
+message AccountCreatedMessage {
+    Account account = 1;
+}
+
+
+message AccountWithdrawnMessage {
+    Account account = 1;
+}
+
+
+message AccountDepositedMessage {
+    Account account = 1;
+}
+
+
+message AccountReservedMessage {
+    Account account = 1;
+}
+
+
+message AccountSuspendedMessage {
+    Account account = 1;
+}
+
+
+message AccountActivatedMessage {
+    Account account = 1;
+}
+
+
+message AccountGetDataResponse {
+    Account account = 1;
+}
+
+
+/*
+    AccountCreateMessage represent event message for user account creation.
+*/
+message AccountCreateMessage {
+    string user_id = 1;
+}
+
+
+message AccountGetData {
+    string user_id = 1;
+}
+
+
+
+message AccountWithdrawMessage {
+    string id = 1;
+    string user_id = 2;
+    string amount = 3;
+}
+
+
+message AccountDepositMessage {
+    string id = 1;
+    string user_id = 2;
+    string amount = 3;
+}
+
+
+message AccountReserveMessage {
+    string id = 1;
+    string user_id = 2;
+    string amount = 3;
+}
+
+message AccountBidReserveMessage {
+    string account_id = 1;
+    string user_id = 2;
+    string bid_id = 3;
+    string amount = 4;
+}
+
+
+message AccountSuspendMessage {
+    string id = 1;
+    string user_id = 2;
+}
+
+message AccountActivateMessage {
+    string id = 1;
+    string user_id = 2;
+}

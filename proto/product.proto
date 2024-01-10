@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package auction;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Puena/autction-messages-proto/auction";
+
+/*
+    Product message represent a product.
+*/
+message Product {
+    string id = 1;
+    string name = 2;
+    repeated string media = 3; // it is a list of media urls.
+    string description = 4;
+    string created_by = 5; // it is user id.
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message CreateProduct {
+    string name = 1;
+    repeated string media = 2; // it is a list of media urls.
+    string description = 3;
+    string created_by = 4; // it is user id.
+}
+
+message UpdateProduct {
+    string id = 1;
+    string name = 2;
+    repeated string media = 3; // it is a list of media urls.
+    string description = 4;
+    string created_by = 5; // it is user id.
+}
+
+message DeleteProduct {
+    string id = 1;
+    string created_by = 2; // it is user id.
+}
+
+message FindProduct {
+    string id = 1;
+}
+
+message FindProducts {
+}
+
+message CommandCreateProduct {
+    string key = 1;
+    CreateProduct value = 2;
+}
+
+message CommandUpdateProduct {
+    string key = 1;
+    UpdateProduct value = 2;
+}
+
+message CommandDeleteProduct {
+    string key = 1;
+    DeleteProduct value = 2;
+}
+
+message QueryFindProduct {
+    string key = 1;
+    FindProduct value = 2;
+}
+
+message QueryFindProducts {
+    string key = 1;
+    FindProducts value = 2;
+}
+
+message EventProductCreated {
+    string key = 1;
+    Product value = 2;
+}
+
+message EventProductUpdated {
+    string key = 1;
+    Product value = 2;
+}
+
+message EventProductDeleted {
+    string key = 1;
+    Product value = 2;
+}
+
+message EventProductFound {
+    string key = 1;
+    Product value = 2;
+}
+
+message EventProductsFound {
+    string key = 1;
+    repeated Product value = 2;
+}
