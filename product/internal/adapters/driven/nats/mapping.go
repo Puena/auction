@@ -1,8 +1,8 @@
 package nats
 
 import (
-	"github.com/Puena/auction-house-product/internal/core/domain"
-	auction "github.com/Puena/auction-messages-golang"
+	"github.com/Puena/auction/product/internal/core/domain"
+	"github.com/Puena/auction/proto/go/auction"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
