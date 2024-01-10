@@ -1,4 +1,4 @@
-module github.com/Puena/auction/go
+module github.com/Puena/auction/proto/go
 
 go 1.21.5
 
