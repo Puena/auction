@@ -3,7 +3,7 @@
 
 ## Table of Contents
 
-- [proto/account.proto](#proto_account-proto)
+- [account.proto](#account-proto)
     - [Account](#auction-Account)
     - [AccountActivateMessage](#auction-AccountActivateMessage)
     - [AccountActivatedMessage](#auction-AccountActivatedMessage)
@@ -23,11 +23,11 @@
   
     - [Account.Status](#auction-Account-Status)
   
-- [proto/error.proto](#proto_error-proto)
+- [error.proto](#error-proto)
     - [EventError](#auction-EventError)
     - [EventErrorOccurred](#auction-EventErrorOccurred)
   
-- [proto/product.proto](#proto_product-proto)
+- [product.proto](#product-proto)
     - [CommandCreateProduct](#auction-CommandCreateProduct)
     - [CommandDeleteProduct](#auction-CommandDeleteProduct)
     - [CommandUpdateProduct](#auction-CommandUpdateProduct)
@@ -35,19 +35,17 @@
     - [DeleteProduct](#auction-DeleteProduct)
     - [EventProductCreated](#auction-EventProductCreated)
     - [EventProductDeleted](#auction-EventProductDeleted)
-    - [EventProductErrorOccurred](#auction-EventProductErrorOccurred)
     - [EventProductFound](#auction-EventProductFound)
     - [EventProductUpdated](#auction-EventProductUpdated)
     - [EventProductsFound](#auction-EventProductsFound)
     - [FindProduct](#auction-FindProduct)
     - [FindProducts](#auction-FindProducts)
     - [Product](#auction-Product)
-    - [ProductError](#auction-ProductError)
     - [QueryFindProduct](#auction-QueryFindProduct)
     - [QueryFindProducts](#auction-QueryFindProducts)
     - [UpdateProduct](#auction-UpdateProduct)
   
-- [proto/user.proto](#proto_user-proto)
+- [user.proto](#user-proto)
     - [EventUserData](#auction-EventUserData)
     - [EventUserError](#auction-EventUserError)
     - [EventUserRevoked](#auction-EventUserRevoked)
@@ -61,10 +59,10 @@
 
 
 
-<a name="proto_account-proto"></a>
+<a name="account-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## proto/account.proto
+## account.proto
 
 
 
@@ -346,10 +344,10 @@ AccountCreateMessage represent event message for user account creation.
 
 
 
-<a name="proto_error-proto"></a>
+<a name="error-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## proto/error.proto
+## error.proto
 
 
 
@@ -401,10 +399,10 @@ AccountCreateMessage represent event message for user account creation.
 
 
 
-<a name="proto_product-proto"></a>
+<a name="product-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## proto/product.proto
+## product.proto
 
 
 
@@ -522,22 +520,6 @@ AccountCreateMessage represent event message for user account creation.
 
 
 
-<a name="auction-EventProductErrorOccurred"></a>
-
-### EventProductErrorOccurred
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [ProductError](#auction-ProductError) |  |  |
-
-
-
-
-
-
 <a name="auction-EventProductFound"></a>
 
 ### EventProductFound
@@ -631,23 +613,6 @@ Product message represent a product.
 
 
 
-<a name="auction-ProductError"></a>
-
-### ProductError
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code | [int32](#int32) |  |  |
-| message | [string](#string) |  |  |
-| reference_event_key | [string](#string) |  |  |
-
-
-
-
-
-
 <a name="auction-QueryFindProduct"></a>
 
 ### QueryFindProduct
@@ -708,10 +673,10 @@ Product message represent a product.
 
 
 
-<a name="proto_user-proto"></a>
+<a name="user-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## proto/user.proto
+## user.proto
 
 
 
