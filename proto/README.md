@@ -3,7 +3,7 @@
 
 ## Table of Contents
 
-- [account.proto](#account-proto)
+- [proto/account.proto](#proto_account-proto)
     - [Account](#auction-Account)
     - [AccountActivateMessage](#auction-AccountActivateMessage)
     - [AccountActivatedMessage](#auction-AccountActivatedMessage)
@@ -23,11 +23,11 @@
   
     - [Account.Status](#auction-Account-Status)
   
-- [error.proto](#error-proto)
+- [proto/error.proto](#proto_error-proto)
     - [EventError](#auction-EventError)
     - [EventErrorOccurred](#auction-EventErrorOccurred)
   
-- [product.proto](#product-proto)
+- [proto/product.proto](#proto_product-proto)
     - [CommandCreateProduct](#auction-CommandCreateProduct)
     - [CommandDeleteProduct](#auction-CommandDeleteProduct)
     - [CommandUpdateProduct](#auction-CommandUpdateProduct)
@@ -45,7 +45,7 @@
     - [QueryFindProducts](#auction-QueryFindProducts)
     - [UpdateProduct](#auction-UpdateProduct)
   
-- [user.proto](#user-proto)
+- [proto/user.proto](#proto_user-proto)
     - [EventUserData](#auction-EventUserData)
     - [EventUserError](#auction-EventUserError)
     - [EventUserRevoked](#auction-EventUserRevoked)
@@ -59,10 +59,10 @@
 
 
 
-<a name="account-proto"></a>
+<a name="proto_account-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## account.proto
+## proto/account.proto
 
 
 
@@ -344,10 +344,10 @@ AccountCreateMessage represent event message for user account creation.
 
 
 
-<a name="error-proto"></a>
+<a name="proto_error-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## error.proto
+## proto/error.proto
 
 
 
@@ -399,10 +399,10 @@ AccountCreateMessage represent event message for user account creation.
 
 
 
-<a name="product-proto"></a>
+<a name="proto_product-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## product.proto
+## proto/product.proto
 
 
 
@@ -673,10 +673,10 @@ Product message represent a product.
 
 
 
-<a name="user-proto"></a>
+<a name="proto_user-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## user.proto
+## proto/user.proto
 
 
 

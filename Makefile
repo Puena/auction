@@ -1,6 +1,6 @@
 src_dir = .
-proto_dir = $(src_dir)
-go_dir = $(src_dir)/go
+proto_dir = $(src_dir)/proto
+go_dir = $(src_dir)/pbgo
 
 installreq:
 	@echo "start install protoc dependecies"
