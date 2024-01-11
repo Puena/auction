@@ -5,6 +5,5 @@ import (
 )
 
 func eventProductToProtoProduct(eventProduct domain.Product) int {
-	fmt.Prinln(proto)
 	return 0
 }
