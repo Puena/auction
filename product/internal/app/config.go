@@ -36,8 +36,8 @@ type config struct {
 	// Names of subject query of product stream.
 	SubjectQueryFindProduct  string `env:"SUBJECT_QUERY_FIND_PRODUCT" envDefault:"product.query.find_product"`
 	SubjectQueryFindProducts string `env:"SUBJECT_QUERY_FIND_PRODUCTS" envDefault:"product.query.find_products"`
-	// PprofPort is port of pprof.
-	PprofPort int `env:"PPROF_PORT" envDefault:"6040"`
+	// HttpPort is port of pprof.
+	HttpPort int `env:"HTTP_PORT" envDefault:"6040"`
 	// LogLevel is level of log.
 	LogLevel string `env:"LOG_LEVEL" envDefault:"debug"`
 	// TraceEnabled is a flag to enable tracing.

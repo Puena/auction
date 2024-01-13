@@ -44,7 +44,7 @@ func (a *app) Run() error {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// init pprof server
-	pprofServer := a.initPprofServer()
+	httpServer := a.initHttpServer()
 	// init nats
 	nats, natsJS, err := a.initNatsJS()
 	if err != nil {
@@ -75,7 +75,7 @@ func (a *app) Run() error {
 		return consumers.ConsumeFindProductsQuery(groupCtx)
 	})
 	errGroup.Go(func() error {
-		return a.listenPprofServer(pprofServer)
+		return a.listenHttpServer(httpServer)
 	})
 
 	// handle signals
@@ -83,11 +83,11 @@ func (a *app) Run() error {
 		select {
 		case <-sigs:
 			logger.Info().Msg("received signal to stop, start terminating...")
-			err := a.gracefulStop(nats, db, pprofServer)
+			err := a.gracefulStop(nats, db, httpServer)
 			done <- err
 		case <-groupCtx.Done():
 			logger.Info().Msg("context done, start terminating...")
-			err := a.gracefulStop(nats, db, pprofServer)
+			err := a.gracefulStop(nats, db, httpServer)
 			done <- err
 		}
 	}()
@@ -143,15 +143,19 @@ func (a *app) initPostgres() (*sql.DB, error) {
 	return db, nil
 }
 
-func (a *app) initPprofServer() *http.Server {
+func (a *app) initHttpServer() *http.Server {
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
 	return &http.Server{
-		Addr: fmt.Sprintf(":%d", a.Config.PprofPort),
+		Addr: fmt.Sprintf(":%d", a.Config.HttpPort),
 	}
 }
 
-func (a *app) listenPprofServer(pprofServer *http.Server) error {
-	logger.Info().Str("port", fmt.Sprintf("%d", a.Config.PprofPort)).Msg("start listening pprof...")
-	err := pprofServer.ListenAndServe()
+func (a *app) listenHttpServer(httpServer *http.Server) error {
+	logger.Info().Str("port", fmt.Sprintf("%d", a.Config.HttpPort)).Msg("start listening pprof...")
+	err := httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		logger.Error().Err(err).Msg("error listening pprof")
 		return err
