@@ -33,8 +33,10 @@ var (
 	errHeaderAuthUserIDNotPresented = fmt.Errorf(headerAuthUserIDNotPresented)
 )
 
-// ConsumeCommandRepositoryConfig represent the config for the consume command repository.
-type ConsumeCommandRepositoryConfig struct {
+type errGroupFunc = func() error
+
+// Config represent the config for the consume command repository.
+type Config struct {
 	AppName                            string
 	ProductStreamName                  string
 	NatsHeaderAuthUserID               string
@@ -48,7 +50,7 @@ type ConsumeCommandRepositoryConfig struct {
 }
 
 // Validate validates the config.
-func (c *ConsumeCommandRepositoryConfig) Validate() error {
+func (c *Config) Validate() error {
 	if c.AppName == "" {
 		return fmt.Errorf("AppName can't be empty")
 	}
@@ -80,19 +82,19 @@ func (c *ConsumeCommandRepositoryConfig) Validate() error {
 	return nil
 }
 
-type productStreamConsumer struct {
-	config  ConsumeCommandRepositoryConfig
+type ProductStreamConsumer struct {
+	config  Config
 	broker  jetstream.JetStream
 	service ports.Service
 }
 
-// NewProductStreamConsumer creates a new consume command repository.
-func NewProductStreamConsumer(nats jetstream.JetStream, service ports.Service, config ConsumeCommandRepositoryConfig) *productStreamConsumer {
+// NewProductStreamConsumer creates a new consume command repository, if the configuration not valid, an error will occur.
+func NewProductStreamConsumer(nats jetstream.JetStream, service ports.Service, config Config) *ProductStreamConsumer {
 	if err := config.Validate(); err != nil {
 		logger.Fatal().Err(err).Msg("failed while validating config")
 	}
 
-	return &productStreamConsumer{
+	return &ProductStreamConsumer{
 		config:  config,
 		broker:  nats,
 		service: service,
@@ -100,7 +102,7 @@ func NewProductStreamConsumer(nats jetstream.JetStream, service ports.Service, c
 }
 
 // ConsumeCreateProductCommand consume and handle create product command.
-func (r *productStreamConsumer) ConsumeCreateProductCommand(ctx context.Context) error {
+func (r *ProductStreamConsumer) ConsumeCreateProductCommand(ctx context.Context) error {
 	// configure jetstream consumer
 	name := fmt.Sprintf("%s-consumer-command-create-product", r.config.AppName)
 	filterSubject := r.config.SubjectProductCommandCreateProduct
@@ -111,14 +113,12 @@ func (r *productStreamConsumer) ConsumeCreateProductCommand(ctx context.Context)
 	}
 
 	// start consuming messages from subject
-	c.Consume(func(m jetstream.Msg) {
-		r.consumerHandler(ctx, consumerConfig.Name, m, r.handleCreateProductCommand)
-	})
+	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleCreateProductCommand))
 
 	return nil
 }
 
-func (r *productStreamConsumer) handleCreateProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
+func (r *ProductStreamConsumer) handleCreateProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
 
 	// get user id from headers, return error if auth header not presented.
 	userID := m.Headers().Get(r.config.NatsHeaderAuthUserID)
@@ -148,7 +148,7 @@ func (r *productStreamConsumer) handleCreateProductCommand(ctx context.Context, 
 }
 
 // ConsumeUpdateProductCommand consume and handle update product command.
-func (r *productStreamConsumer) ConsumeUpdateProductCommand(ctx context.Context) error {
+func (r *ProductStreamConsumer) ConsumeUpdateProductCommand(ctx context.Context) error {
 	// configure jetstream consumer
 	name := fmt.Sprintf("%s-consumer-command-update-product", r.config.AppName)
 	filterSubject := r.config.SubjectProductCommandUpdateProduct
@@ -159,14 +159,12 @@ func (r *productStreamConsumer) ConsumeUpdateProductCommand(ctx context.Context)
 	}
 
 	// start consuming messages from subject
-	c.Consume(func(m jetstream.Msg) {
-		r.consumerHandler(ctx, consumerConfig.Name, m, r.handleUpdateProductCommand)
-	})
+	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleUpdateProductCommand))
 
 	return nil
 }
 
-func (r *productStreamConsumer) handleUpdateProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
+func (r *ProductStreamConsumer) handleUpdateProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
 
 	// get user id from headers, return error if auth header not presented.
 	userID := m.Headers().Get(r.config.NatsHeaderAuthUserID)
@@ -196,7 +194,7 @@ func (r *productStreamConsumer) handleUpdateProductCommand(ctx context.Context, 
 }
 
 // ConsumeDeleteProductCommand consume and handle delete product command.
-func (r *productStreamConsumer) ConsumeDeleteProductCommand(ctx context.Context) error {
+func (r *ProductStreamConsumer) ConsumeDeleteProductCommand(ctx context.Context) error {
 	// configure jetstream consumer
 	name := fmt.Sprintf("%s-consumer-command-delete-product", r.config.AppName)
 	filterSubject := r.config.SubjectProductCommandDeleteProduct
@@ -207,14 +205,12 @@ func (r *productStreamConsumer) ConsumeDeleteProductCommand(ctx context.Context)
 	}
 
 	// start consuming messages from subject
-	c.Consume(func(m jetstream.Msg) {
-		r.consumerHandler(ctx, consumerConfig.Name, m, r.handleDeleteProductCommand)
-	})
+	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleDeleteProductCommand))
 
 	return nil
 }
 
-func (r *productStreamConsumer) handleDeleteProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
+func (r *ProductStreamConsumer) handleDeleteProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
 
 	// get user id from headers, return error if auth header not presented.
 	userID := m.Headers().Get(r.config.NatsHeaderAuthUserID)
@@ -244,7 +240,7 @@ func (r *productStreamConsumer) handleDeleteProductCommand(ctx context.Context, 
 }
 
 // ConsumeFindProductQuery consume and handle find product query.
-func (r *productStreamConsumer) ConsumeFindProductQuery(ctx context.Context) error {
+func (r *ProductStreamConsumer) ConsumeFindProductQuery(ctx context.Context) error {
 	// configure jetstream consumer
 	name := fmt.Sprintf("%s-consumer-query-find-product", r.config.AppName)
 	filterSubject := r.config.SubjectProductQueryFindProduct
@@ -255,14 +251,12 @@ func (r *productStreamConsumer) ConsumeFindProductQuery(ctx context.Context) err
 	}
 
 	// start consuming messages from subject
-	c.Consume(func(m jetstream.Msg) {
-		r.consumerHandler(ctx, consumerConfig.Name, m, r.handleFindProductQuery)
-	})
+	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleFindProductQuery))
 
 	return nil
 }
 
-func (r *productStreamConsumer) handleFindProductQuery(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
+func (r *ProductStreamConsumer) handleFindProductQuery(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
 
 	// get user id from headers, return error if auth header not presented.
 	userID := m.Headers().Get(r.config.NatsHeaderAuthUserID)
@@ -292,7 +286,7 @@ func (r *productStreamConsumer) handleFindProductQuery(ctx context.Context, cons
 }
 
 // ConsumeFindProductsQuery consume and handle find products query.
-func (r *productStreamConsumer) ConsumeFindProductsQuery(ctx context.Context) error {
+func (r *ProductStreamConsumer) ConsumeFindProductsQuery(ctx context.Context) error {
 	// configure jetstream consumer
 	name := fmt.Sprintf("%s-consumer-query-find-products", r.config.AppName)
 	filterSubject := r.config.SubjectProductQueryFindProducts
@@ -303,14 +297,12 @@ func (r *productStreamConsumer) ConsumeFindProductsQuery(ctx context.Context) er
 	}
 
 	// start consuming messages from subject
-	c.Consume(func(m jetstream.Msg) {
-		r.consumerHandler(ctx, consumerConfig.Name, m, r.handleFindProductsQuery)
-	})
+	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleFindProductsQuery))
 
 	return nil
 }
 
-func (r *productStreamConsumer) handleFindProductsQuery(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
+func (r *ProductStreamConsumer) handleFindProductsQuery(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
 
 	// get user id from headers, return error if auth header not presented.
 	userID := m.Headers().Get(r.config.NatsHeaderAuthUserID)
@@ -339,31 +331,36 @@ func (r *productStreamConsumer) handleFindProductsQuery(ctx context.Context, con
 	return nil
 }
 
-func (r *productStreamConsumer) consumerHandler(ctx context.Context, consumerName string, m jetstream.Msg, handler func(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError) {
-	// Warning! Don't forget ack message!
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+func (r *ProductStreamConsumer) consumeHandler(ctx context.Context, consumerName string, handler func(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError) func(jetstream.Msg) {
+	return func(m jetstream.Msg) {
+		// Warning! Don't forget ack message!
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 
-	eventErr := handler(ctx, consumerName, m)
-	if eventErr != nil {
-		err := r.publishEventProductError(ctx, m.Headers().Get(r.config.NatsHeaderAuthUserID), eventErr)
-		if err != nil {
-			logger.Error().Err(err).Msg(publishEventErrorFailed)
-			return
+		eventErr := handler(ctx, consumerName, m)
+		if eventErr != nil {
+			// check if error occurred, then try to publish to error stream
+			err := r.publishEventProductError(ctx, m.Headers().Get(r.config.NatsHeaderAuthUserID), eventErr)
+			if err != nil {
+				logger.Error().Err(err).Msg(publishEventErrorFailed)
+				return
+			}
 		}
-	}
-	err := r.NackOrAckOrTerm(ctx, m, eventErr)
-	if err != nil {
-		eventErr = r.newProductEventError(consumerName, m, fmt.Errorf(ackFailed, err), codes.Internal)
-		err := r.publishEventProductError(ctx, m.Headers().Get(r.config.NatsHeaderAuthUserID), eventErr)
+		// then ack message, if error occurred, try to publish to error stream
+		err := r.ackOrNackOrTerm(ctx, m, eventErr)
 		if err != nil {
-			logger.Error().Err(err).Msg(publishEventErrorFailed)
-			return
+			eventErr = r.newProductEventError(consumerName, m, fmt.Errorf(ackFailed, err), codes.Internal)
+			err := r.publishEventProductError(ctx, m.Headers().Get(r.config.NatsHeaderAuthUserID), eventErr)
+			if err != nil {
+				logger.Error().Err(err).Msg(publishEventErrorFailed)
+				return
+			}
 		}
+
 	}
 }
 
-func (r *productStreamConsumer) publishEventProductError(ctx context.Context, userID string, event *dto.ProductEventError) error {
+func (r *ProductStreamConsumer) publishEventProductError(ctx context.Context, userID string, event *dto.ProductEventError) error {
 	if event == nil {
 		logger.Error().Msg("event can not be nil")
 		return nil
@@ -372,7 +369,7 @@ func (r *productStreamConsumer) publishEventProductError(ctx context.Context, us
 	return r.service.PublishEventProductError(ctx, userID, *event)
 }
 
-func (r *productStreamConsumer) composeEventProductError(consumer string, msg jetstream.Msg, err error) *dto.ProductEventError {
+func (r *ProductStreamConsumer) composeEventProductError(consumer string, msg jetstream.Msg, err error) *dto.ProductEventError {
 	if r.service.UniqueConstrainError(err) {
 		return r.newProductEventError(consumer, msg, err, codes.AlreadyExists)
 	}
@@ -385,7 +382,7 @@ func (r *productStreamConsumer) composeEventProductError(consumer string, msg je
 	return r.newProductEventError(consumer, msg, err, codes.Internal)
 }
 
-func (r *productStreamConsumer) newProductEventError(consumerName string, jsMsg jetstream.Msg, err error, status codes.Code) *dto.ProductEventError {
+func (r *ProductStreamConsumer) newProductEventError(consumerName string, jsMsg jetstream.Msg, err error, status codes.Code) *dto.ProductEventError {
 	return &dto.ProductEventError{
 		StreamName:          r.config.ProductStreamName,
 		ConsumerName:        consumerName,
@@ -399,7 +396,7 @@ func (r *productStreamConsumer) newProductEventError(consumerName string, jsMsg 
 	}
 }
 
-func (r *productStreamConsumer) NackOrAckOrTerm(ctx context.Context, msg jetstream.Msg, dtoErr *dto.ProductEventError) error {
+func (r *ProductStreamConsumer) ackOrNackOrTerm(ctx context.Context, msg jetstream.Msg, dtoErr *dto.ProductEventError) error {
 	if dtoErr == nil {
 		return msg.DoubleAck(ctx)
 	}

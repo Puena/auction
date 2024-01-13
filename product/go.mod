@@ -22,6 +22,8 @@ require (
 require (
 	github.com/Puena/auction/logger v0.0.0-20240111215305-3ea6cacabcd3
 	github.com/Puena/auction/pbgo v0.0.0-20240111214555-36461dcc820e
+	github.com/caarlos0/env/v10 v10.0.0
+	github.com/caarlos0/env/v6 v6.10.1
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

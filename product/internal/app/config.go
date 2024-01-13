@@ -1,6 +1,10 @@
-package config
+package app
 
-type ConfigOpt func(*config)
+import (
+	"github.com/caarlos0/env/v10"
+)
+
+type ConfigOpt func(*config) error
 
 type config struct {
 	// AppName is name of current application.
@@ -32,6 +36,8 @@ type config struct {
 	// Names of subject query of product stream.
 	SubjectQueryFindProduct  string `env:"SUBJECT_QUERY_FIND_PRODUCT" envDefault:"product.query.find_product"`
 	SubjectQueryFindProducts string `env:"SUBJECT_QUERY_FIND_PRODUCTS" envDefault:"product.query.find_products"`
+	// PprofPort is port of pprof.
+	PprofPort int `env:"PPROF_PORT" envDefault:"6040"`
 	// LogLevel is level of log.
 	LogLevel string `env:"LOG_LEVEL" envDefault:"debug"`
 	// TraceEnabled is a flag to enable tracing.
@@ -41,7 +47,19 @@ type config struct {
 func NewConfig(opts ...ConfigOpt) (*config, error) {
 	cfg := &config{}
 	for _, opt := range opts {
-		opt(cfg)
+		if err := opt(cfg); err != nil {
+			return nil, err
+		}
 	}
 	return cfg, nil
+}
+
+// get config from environment variables.
+func WithEnv() ConfigOpt {
+	parseOptions := env.Options{
+		Prefix: "PS_",
+	}
+	return func(c *config) error {
+		return env.ParseWithOptions(c, parseOptions)
+	}
 }

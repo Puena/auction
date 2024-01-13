@@ -1,4 +1,4 @@
-package database
+package postgres
 
 import (
 	"database/sql"
@@ -35,7 +35,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// Connect create a new postgres connection.
+// Connect create a new postgres connection, and check it doing ping.
 func Connect(conf Config) (*sql.DB, error) {
 	if err := conf.Validate(); err != nil {
 		return nil, err

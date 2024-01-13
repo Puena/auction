@@ -16,7 +16,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type PublishEventRepositoryConfig struct {
+const (
+	natsMessageRetries = 3
+)
+
+type Config struct {
 	ProductStreamHeaderAuthUserID string
 	ProductStreamHeaderOccuredAt  string
 	SubjectEventProductCreated    string
@@ -25,10 +29,9 @@ type PublishEventRepositoryConfig struct {
 	SubjectEventProductFound      string
 	SubjectEventProductsFound     string
 	SubjectEventProductError      string
-	NatsMessageRetries            int
 }
 
-func (c *PublishEventRepositoryConfig) Validate() error {
+func (c *Config) Validate() error {
 	if c.ProductStreamHeaderAuthUserID == "" {
 		return fmt.Errorf("ProductStreamHeaderAuthUserID can't be empty")
 	}
@@ -50,20 +53,17 @@ func (c *PublishEventRepositoryConfig) Validate() error {
 	if c.SubjectEventProductsFound == "" {
 		return fmt.Errorf("SubjectProductEventProductsFound can't be empty")
 	}
-	if c.NatsMessageRetries <= 0 {
-		return fmt.Errorf("NatsMessageRetries can't be less or equal 0")
-	}
 
 	return nil
 }
 
 type publishEventRepository struct {
-	config PublishEventRepositoryConfig
+	config Config
 	broker jetstream.JetStream
 }
 
 // NewPublishEventRepository creates a new publish event repository.
-func NewPublishEventRepository(nats jetstream.JetStream, config PublishEventRepositoryConfig) *publishEventRepository {
+func NewPublishEventRepository(nats jetstream.JetStream, config Config) *publishEventRepository {
 	err := config.Validate()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed while validating config")
@@ -88,12 +88,11 @@ func (p *publishEventRepository) publishToNatsJetStream(subject string, msgID st
 		return nil, fmt.Errorf("failed when marshaling proto message: %w", err)
 	}
 
-	configOpts := []jetstream.PublishOpt{}
+	configOpts := []jetstream.PublishOpt{
+		jetstream.WithRetryAttempts(natsMessageRetries),
+	}
 	if msgID != "" {
 		configOpts = append(configOpts, jetstream.WithMsgID(msgID))
-	}
-	if p.config.NatsMessageRetries > 0 {
-		configOpts = append(configOpts, jetstream.WithRetryAttempts(p.config.NatsMessageRetries))
 	}
 	opts = append(configOpts, opts...)
 
@@ -167,14 +166,18 @@ func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID stri
 }
 
 // Publish event product found, userID is who initiated this action, if found nothing empty array returns.
-func (p *publishEventRepository) ProductFound(ctx context.Context, userID string, event domain.EventProductsFound) error {
+func (p *publishEventRepository) ProductFound(ctx context.Context, userID string, event domain.EventProductFound) error {
 	msgID := ulid.Make().String()
-	protoMsg := &auction.EventProductsFound{
-		Key:   msgID,
-		Value: []*auction.Product{},
-	}
-	for _, ep := range event.Value {
-		protoMsg.Value = append(protoMsg.Value, eventProductToProtoProduct(ep))
+	protoMsg := &auction.EventProductFound{
+		Key: event.Key,
+		Value: &auction.Product{
+			Id:          event.Value.ID,
+			Name:        event.Value.Name,
+			Media:       event.Value.Media,
+			Description: event.Value.Description,
+			CreatedBy:   event.Value.CreatedBy,
+			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
+		},
 	}
 
 	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductsFound, msgID, p.setAdditionalHeaders(userID, time.Now()), protoMsg)

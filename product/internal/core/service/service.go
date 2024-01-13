@@ -200,7 +200,7 @@ func (s *productService) PublishEventProductsFound(ctx context.Context, authUser
 }
 
 // PublishProductError publish event product error.
-func (s *productService) PublishProductError(ctx context.Context, authUserID string, productError dto.ProductEventError) error {
+func (s *productService) PublishEventProductError(ctx context.Context, authUserID string, productError dto.ProductEventError) error {
 	eventKey := fmt.Sprintf("%s_%s_%d", eventKeyPrefixEventError, productError.Reference_event_key, productError.Time.UnixMicro())
 
 	return s.publish.ProductError(ctx, authUserID, domain.NewEventProductError(eventKey, mapDtoInternalEventErrorToDomain(productError)))
@@ -215,4 +215,9 @@ func (s *productService) ValidationError(err error) bool {
 // UniqueConstrainError returns true if the error is a service unique constrain error.
 func (s *productService) UniqueConstrainError(err error) bool {
 	return s.database.ConflictError(err)
+}
+
+// NotFoundError returns true if the error is a service not found error.
+func (s *productService) NotFoundError(err error) bool {
+	return s.database.NotFoundError(err)
 }
