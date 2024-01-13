@@ -15,7 +15,7 @@ var embedMigrations embed.FS
 const (
 	sqlDriver       = "pgx"
 	gooseDialect    = "postgres"
-	migrationFolder = "migrations/" // look at the embedMigrations path
+	migrationFolder = "migrations" // should be same as at the embedMigrations path
 )
 
 func init() {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/Puena/auction/logger"
 	"github.com/Puena/auction/product/internal/app"
 )
@@ -22,7 +24,7 @@ func main() {
 	}
 
 	// run app
-	err = app.Run()
+	err = app.Run(context.Background())
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed while running app")
 	}

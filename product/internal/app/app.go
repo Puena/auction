@@ -35,10 +35,7 @@ func NewApp(cfg *config) *app {
 }
 
 // Run runs the app, blocking, return error if something happened.
-func (a *app) Run() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func (a *app) Run(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 	done := make(chan error, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -113,7 +110,11 @@ func (a *app) RunMigration() error {
 	}
 
 	if err := postgres.UpMigration(db); err != nil {
-		return fmt.Errorf("error running postgres migration: %w", err)
+		return fmt.Errorf("error running postgres up migration: %w", err)
+	}
+	err = db.Close()
+	if err != nil {
+		return fmt.Errorf("error closing postgres connection: %w", err)
 	}
 	return nil
 }
