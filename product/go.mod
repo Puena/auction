@@ -26,6 +26,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -60,7 +61,7 @@ require (
 
 require (
 	github.com/Puena/auction/logger v0.0.0-20240111215305-3ea6cacabcd3
-	github.com/Puena/auction/pbgo v0.0.0-20240111214555-36461dcc820e
+	github.com/Puena/auction/pbgo v0.0.0-20240113133408-2623a78f10ce
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
