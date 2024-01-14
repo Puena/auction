@@ -17,6 +17,7 @@ message Product {
     string description = 4;
     string created_by = 5; // it is user id.
     google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
 }
 
 message CreateProduct {

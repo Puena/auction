@@ -22,6 +22,8 @@ type config struct {
 	NatsHeaderOccuredAt string `env:"PRODUCT_STREAM_HEADER_OCCURED_AT" envDefault:"Msg-Occured-At"`
 	// NatsHeaderMsgID is header name of msg id.
 	NatsHeaderMsgID string `env:"PRODUCT_STREAM_HEADER_OCCURED_AT" envDefault:"Nats-Msg-Id"`
+	// NatsHeaderReplyToMsgID is header name of reply to msg id (optional).
+	NatsHeaderReplyToMsgID string `env:"PRODUCT_STREAM_HEADER_REPLY_TO_MSG_ID" envDefault:"Reply-To-Msg-Id"`
 	// Names of subject events of product stream.
 	SubjectEventProductCreated string `env:"SUBJECT_EVENT_PRODUCT_CREATED" envDefault:"product.event.product_created"`
 	SubjectEventProductUpdated string `env:"SUBJECT_EVENT_PRODUCT_UPDATED" envDefault:"product.event.product_updated"`

@@ -14,5 +14,6 @@ func eventProductToProtoProduct(eventProduct domain.Product) *auction.Product {
 		Media:       eventProduct.Media,
 		CreatedAt:   timestamppb.New(eventProduct.CreatedAt),
 		CreatedBy:   eventProduct.CreatedBy,
+		UpdatedAt:   timestamppb.New(eventProduct.UpdatedAt),
 	}
 }

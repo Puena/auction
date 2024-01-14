@@ -139,7 +139,7 @@ func (r *ProductStreamConsumer) handleCreateProductCommand(ctx context.Context, 
 	}
 
 	// publish event productCreated
-	err = r.service.PublishEventProductCreated(ctx, userID, p)
+	err = r.service.PublishEventProductCreated(ctx, userID, p, s.Key)
 	if err != nil {
 		return r.composeEventProductError(consumerName, m, err)
 	}
@@ -185,7 +185,7 @@ func (r *ProductStreamConsumer) handleUpdateProductCommand(ctx context.Context, 
 	}
 
 	// publish event productUpdated
-	err = r.service.PublishEventProductUpdated(ctx, userID, p)
+	err = r.service.PublishEventProductUpdated(ctx, userID, p, s.Key)
 	if err != nil {
 		return r.composeEventProductError(consumerName, m, err)
 	}
@@ -231,7 +231,7 @@ func (r *ProductStreamConsumer) handleDeleteProductCommand(ctx context.Context, 
 	}
 
 	// publish event productDeleted
-	err = r.service.PublishEventProductDeleted(ctx, userID, p)
+	err = r.service.PublishEventProductDeleted(ctx, userID, p, s.Key)
 	if err != nil {
 		return r.composeEventProductError(consumerName, m, err)
 	}
@@ -277,7 +277,7 @@ func (r *ProductStreamConsumer) handleFindProductQuery(ctx context.Context, cons
 	}
 
 	// publish event productFound
-	err = r.service.PublishEventProductFound(ctx, userID, p)
+	err = r.service.PublishEventProductFound(ctx, userID, p, s.Key)
 	if err != nil {
 		return r.composeEventProductError(consumerName, m, err)
 	}
@@ -323,7 +323,7 @@ func (r *ProductStreamConsumer) handleFindProductsQuery(ctx context.Context, con
 	}
 
 	// publish event productsFound
-	err = r.service.PublishEventProductsFound(ctx, userID, p)
+	err = r.service.PublishEventProductsFound(ctx, userID, p, s.Key)
 	if err != nil {
 		return r.composeEventProductError(consumerName, m, err)
 	}
@@ -366,7 +366,7 @@ func (r *ProductStreamConsumer) publishEventProductError(ctx context.Context, us
 		return nil
 	}
 	logger.Error().Err(event).Msg("error occured")
-	return r.service.PublishEventProductError(ctx, userID, *event)
+	return r.service.PublishEventProductError(ctx, userID, *event, event.Reference_event_key)
 }
 
 func (r *ProductStreamConsumer) composeEventProductError(consumer string, msg jetstream.Msg, err error) *dto.ProductEventError {

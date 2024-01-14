@@ -12,12 +12,12 @@ pq -> ps: subject: product.query.find_products\nproto: QueryFindProducts\nheader
 end
 
 group publish
-ps -> pq: subject: product.event.product_created\nproto: EventProductCreated\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At" }"}
-ps -> pq: subject: product.event.product_updated\nproto: EventProductUpdated\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At" }"}
-ps -> pq: subject: product.event.product_deleted\nproto: EventProductDeleted\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At" }"}
-ps -> pq: subject: product.event.product_found\nproto: EventProductsFound\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At" }"}
-ps -> pq: subject: product.event.products_found\nproto: EventProductsFound\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At" }"}
-ps -> eq: subject: error.product\nproto: EventErrorOccurred\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At" }"}
+ps -> pq: subject: product.event.product_created\nproto: EventProductCreated\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At", "Reply-To-Msg-Id" }"}
+ps -> pq: subject: product.event.product_updated\nproto: EventProductUpdated\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At", "Reply-To-Msg-Id" }"}
+ps -> pq: subject: product.event.product_deleted\nproto: EventProductDeleted\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At", "Reply-To-Msg-Id" }"}
+ps -> pq: subject: product.event.product_found\nproto: EventProductsFound\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At", "Reply-To-Msg-Id" }"}
+ps -> pq: subject: product.event.products_found\nproto: EventProductsFound\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At", "Reply-To-Msg-Id" }"}
+ps -> eq: subject: error.product\nproto: EventErrorOccurred\nheaders: { "Auth-User-Id", "NATS-Msg-Id", "Msg-Occured-At", "Reply-To-Msg-Id" }"}
 end
 
 @enduml

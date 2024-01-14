@@ -10,7 +10,6 @@ import (
 	"github.com/Puena/auction/product/internal/core/domain"
 	natsJS "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -21,22 +20,30 @@ const (
 )
 
 type Config struct {
-	ProductStreamHeaderAuthUserID string
-	ProductStreamHeaderOccuredAt  string
-	SubjectEventProductCreated    string
-	SubjectEventProductUpdated    string
-	SubjectEventProductDeleted    string
-	SubjectEventProductFound      string
-	SubjectEventProductsFound     string
-	SubjectEventProductError      string
+	ProductStreamHeaderAuthUserID   string
+	ProductStreamHeaderMsgID        string
+	ProductStreamHeaderReplyToMsgID string
+	ProductStreamHeaderOccuredAt    string
+	SubjectEventProductCreated      string
+	SubjectEventProductUpdated      string
+	SubjectEventProductDeleted      string
+	SubjectEventProductFound        string
+	SubjectEventProductsFound       string
+	SubjectEventProductError        string
 }
 
 func (c *Config) Validate() error {
 	if c.ProductStreamHeaderAuthUserID == "" {
 		return fmt.Errorf("ProductStreamHeaderAuthUserID can't be empty")
 	}
+	if c.ProductStreamHeaderMsgID == "" {
+		return fmt.Errorf("ProductStreamHeaderMsgID can't be empty")
+	}
 	if c.ProductStreamHeaderOccuredAt == "" {
 		return fmt.Errorf("ProductStreamHeaderOccuredAt can't be empty")
+	}
+	if c.ProductStreamHeaderReplyToMsgID == "" {
+		return fmt.Errorf("ProductStreamHeaderReplyToMsgID can't be empty")
 	}
 	if c.SubjectEventProductCreated == "" {
 		return fmt.Errorf("SubjectProductEventProductCreated can't be empty")
@@ -57,6 +64,13 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+type headerOpts struct {
+	AuthUserID   string
+	OccuredAt    time.Time
+	MsgID        string
+	ReplyToMsgID string
+}
+
 type publishEventRepository struct {
 	config Config
 	broker jetstream.JetStream
@@ -71,15 +85,23 @@ func NewPublishEventRepository(nats jetstream.JetStream, config Config) *publish
 	return &publishEventRepository{broker: nats, config: config}
 }
 
-func (p *publishEventRepository) setAdditionalHeaders(authUserID string, occuredAt time.Time) natsJS.Header {
+func (p *publishEventRepository) setAdditionalHeaders(opts headerOpts) natsJS.Header {
 	headers := natsJS.Header{}
-	headers.Set(p.config.ProductStreamHeaderAuthUserID, authUserID)
-	headers.Set(p.config.ProductStreamHeaderOccuredAt, occuredAt.Format(time.RFC3339))
+	if opts.AuthUserID != "" {
+		headers.Set(p.config.ProductStreamHeaderAuthUserID, opts.AuthUserID)
+	}
+	if opts.MsgID != "" {
+		headers.Set(p.config.ProductStreamHeaderMsgID, opts.MsgID)
+	}
+	if opts.ReplyToMsgID != "" {
+		headers.Set(p.config.ProductStreamHeaderReplyToMsgID, opts.ReplyToMsgID)
+	}
+	headers.Set(p.config.ProductStreamHeaderOccuredAt, opts.OccuredAt.Format(time.RFC3339))
 
 	return headers
 }
 
-func (p *publishEventRepository) publishToNatsJetStream(subject string, msgID string, headers natsJS.Header, protoMsg protoreflect.ProtoMessage, opts ...jetstream.PublishOpt) (*jetstream.PubAck, error) {
+func (p *publishEventRepository) publishToNatsJetStream(subject string, headers natsJS.Header, protoMsg protoreflect.ProtoMessage, opts ...jetstream.PublishOpt) (*jetstream.PubAck, error) {
 	natsMsg := natsJS.NewMsg(subject)
 	natsMsg.Header = headers
 	var err error
@@ -91,18 +113,15 @@ func (p *publishEventRepository) publishToNatsJetStream(subject string, msgID st
 	configOpts := []jetstream.PublishOpt{
 		jetstream.WithRetryAttempts(natsMessageRetries),
 	}
-	if msgID != "" {
-		configOpts = append(configOpts, jetstream.WithMsgID(msgID))
-	}
 	opts = append(configOpts, opts...)
 
 	return p.broker.PublishMsg(context.Background(), natsMsg, opts...)
 }
 
 // Publish event product created, userID is who initiated this action.
-func (p *publishEventRepository) ProductCreated(ctx context.Context, userID string, event domain.EventProductCreated) error {
+func (p *publishEventRepository) ProductCreated(ctx context.Context, userID string, event domain.EventProductCreated, replyTo string) error {
 	protoMsg := &auction.EventProductCreated{
-		Key: event.Value.ID,
+		Key: event.Key,
 		Value: &auction.Product{
 			Id:          event.Value.ID,
 			Name:        event.Value.Name,
@@ -113,7 +132,14 @@ func (p *publishEventRepository) ProductCreated(ctx context.Context, userID stri
 		},
 	}
 
-	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductCreated, event.Value.ID, p.setAdditionalHeaders(userID, time.Now()), protoMsg)
+	hOpts := &headerOpts{
+		MsgID:        protoMsg.Key,
+		AuthUserID:   userID,
+		OccuredAt:    time.Now(),
+		ReplyToMsgID: replyTo,
+	}
+
+	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductCreated, p.setAdditionalHeaders(*hOpts), protoMsg)
 	if err != nil {
 		return err
 	}
@@ -122,9 +148,9 @@ func (p *publishEventRepository) ProductCreated(ctx context.Context, userID stri
 }
 
 // Publish event product updated, userID is who initiated this action.
-func (p *publishEventRepository) ProductUpdated(ctx context.Context, userID string, event domain.EventProductUpdated) error {
+func (p *publishEventRepository) ProductUpdated(ctx context.Context, userID string, event domain.EventProductUpdated, replyToMsgID string) error {
 	protoMsg := &auction.EventProductUpdated{
-		Key: event.Value.ID,
+		Key: event.Key,
 		Value: &auction.Product{
 			Id:          event.Value.ID,
 			Name:        event.Value.Name,
@@ -132,10 +158,18 @@ func (p *publishEventRepository) ProductUpdated(ctx context.Context, userID stri
 			Description: event.Value.Description,
 			CreatedBy:   event.Value.CreatedBy,
 			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
+			UpdatedAt:   timestamppb.New(event.Value.UpdatedAt),
 		},
 	}
 
-	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductUpdated, event.Value.ID, p.setAdditionalHeaders(userID, time.Now()), protoMsg)
+	hOpts := headerOpts{
+		MsgID:        protoMsg.Key,
+		AuthUserID:   userID,
+		OccuredAt:    time.Now(),
+		ReplyToMsgID: replyToMsgID,
+	}
+
+	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductUpdated, p.setAdditionalHeaders(hOpts), protoMsg)
 	if err != nil {
 		return err
 	}
@@ -144,9 +178,9 @@ func (p *publishEventRepository) ProductUpdated(ctx context.Context, userID stri
 }
 
 // Publish event product deleted, userID is who initiated this action.
-func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID string, event domain.EventProductDeleted) error {
+func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID string, event domain.EventProductDeleted, replyToMsgID string) error {
 	protoMsg := &auction.EventProductDeleted{
-		Key: event.Value.ID,
+		Key: event.Key,
 		Value: &auction.Product{
 			Id:          event.Value.ID,
 			Name:        event.Value.Name,
@@ -154,10 +188,17 @@ func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID stri
 			Description: event.Value.Description,
 			CreatedBy:   event.Value.CreatedBy,
 			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
+			UpdatedAt:   timestamppb.New(event.Value.UpdatedAt),
 		},
 	}
 
-	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductDeleted, event.Value.ID, p.setAdditionalHeaders(userID, time.Now()), protoMsg)
+	hOpts := headerOpts{
+		MsgID:        protoMsg.Key,
+		AuthUserID:   userID,
+		OccuredAt:    time.Now(),
+		ReplyToMsgID: replyToMsgID,
+	}
+	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductDeleted, p.setAdditionalHeaders(hOpts), protoMsg)
 	if err != nil {
 		return err
 	}
@@ -166,8 +207,7 @@ func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID stri
 }
 
 // Publish event product found, userID is who initiated this action, if found nothing empty array returns.
-func (p *publishEventRepository) ProductFound(ctx context.Context, userID string, event domain.EventProductFound) error {
-	msgID := ulid.Make().String()
+func (p *publishEventRepository) ProductFound(ctx context.Context, userID string, event domain.EventProductFound, replyToMsgID string) error {
 	protoMsg := &auction.EventProductFound{
 		Key: event.Key,
 		Value: &auction.Product{
@@ -180,7 +220,14 @@ func (p *publishEventRepository) ProductFound(ctx context.Context, userID string
 		},
 	}
 
-	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductsFound, msgID, p.setAdditionalHeaders(userID, time.Now()), protoMsg)
+	hOpts := headerOpts{
+		MsgID:        protoMsg.Key,
+		AuthUserID:   userID,
+		OccuredAt:    time.Now(),
+		ReplyToMsgID: replyToMsgID,
+	}
+
+	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductsFound, p.setAdditionalHeaders(hOpts), protoMsg)
 	if err != nil {
 		return err
 	}
@@ -189,17 +236,23 @@ func (p *publishEventRepository) ProductFound(ctx context.Context, userID string
 }
 
 // Publish event products found, userID is who initiated this action, if found nothing empty array returns.
-func (p *publishEventRepository) ProductsFound(ctx context.Context, userID string, event domain.EventProductsFound) error {
-	msgID := ulid.Make().String()
+func (p *publishEventRepository) ProductsFound(ctx context.Context, userID string, event domain.EventProductsFound, replyToMsgID string) error {
 	protoMsg := &auction.EventProductsFound{
-		Key:   msgID,
+		Key:   event.Key,
 		Value: []*auction.Product{},
 	}
 	for _, ep := range event.Value {
 		protoMsg.Value = append(protoMsg.Value, eventProductToProtoProduct(ep))
 	}
 
-	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductsFound, msgID, p.setAdditionalHeaders(userID, time.Now()), protoMsg)
+	hOpts := headerOpts{
+		MsgID:        protoMsg.Key,
+		AuthUserID:   userID,
+		OccuredAt:    time.Now(),
+		ReplyToMsgID: replyToMsgID,
+	}
+
+	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductsFound, p.setAdditionalHeaders(hOpts), protoMsg)
 	if err != nil {
 		return err
 	}
@@ -208,7 +261,7 @@ func (p *publishEventRepository) ProductsFound(ctx context.Context, userID strin
 }
 
 // ProductError publish event error.
-func (p *publishEventRepository) ProductError(ctx context.Context, userID string, event domain.EventProductError) error {
+func (p *publishEventRepository) ProductError(ctx context.Context, userID string, event domain.EventProductError, replyToMsgID string) error {
 	protoMsg := &auction.EventErrorOccurred{
 		Key: event.Key,
 		Value: &auction.EventError{
@@ -224,7 +277,14 @@ func (p *publishEventRepository) ProductError(ctx context.Context, userID string
 		},
 	}
 
-	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductError, event.Key, p.setAdditionalHeaders(userID, time.Now()), protoMsg)
+	hOpts := headerOpts{
+		MsgID:        protoMsg.Key,
+		AuthUserID:   userID,
+		OccuredAt:    time.Now(),
+		ReplyToMsgID: replyToMsgID,
+	}
+
+	_, err := p.publishToNatsJetStream(p.config.SubjectEventProductError, p.setAdditionalHeaders(hOpts), protoMsg)
 	if err != nil {
 		return err
 	}

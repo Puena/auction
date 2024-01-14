@@ -19,17 +19,17 @@ type Service interface {
 	// FindProducts finds products and return found products or error.
 	FindProducts(ctx context.Context, authUserID string, data dto.QueryFindProducts) ([]dto.Product, error)
 	// PublishEventProductCreated publish event product created.
-	PublishEventProductCreated(ctx context.Context, authUserID string, product dto.Product) error
+	PublishEventProductCreated(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error
 	// PublishEventProductUpdated publish event product updated.
-	PublishEventProductUpdated(ctx context.Context, authUserID string, product dto.Product) error
+	PublishEventProductUpdated(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error
 	// PublishEventProductDeleted publish event product deleted.
-	PublishEventProductDeleted(ctx context.Context, authUserID string, product dto.Product) error
+	PublishEventProductDeleted(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error
 	// PublishEventProductFound publish event product found.
-	PublishEventProductFound(ctx context.Context, authUserID string, product dto.Product) error
+	PublishEventProductFound(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error
 	// PublishEventProductsFound publish event products found, limit 50 products.
-	PublishEventProductsFound(ctx context.Context, authUserID string, products []dto.Product) error
+	PublishEventProductsFound(ctx context.Context, authUserID string, products []dto.Product, replyToMsgID string) error
 	// PublishEventProductError publish event product error.
-	PublishEventProductError(ctx context.Context, authUserID string, productError dto.ProductEventError) error
+	PublishEventProductError(ctx context.Context, authUserID string, productError dto.ProductEventError, replyToMsgID string) error
 	/*
 		Errors
 	*/

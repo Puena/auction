@@ -9,15 +9,16 @@ import (
 
 	logger "github.com/Puena/auction/logger"
 	"github.com/Puena/auction/product/internal/core/domain"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type productRepository struct {
-	db *sql.DB
+	db *pgx.Conn
 }
 
 // NewProductRepository create a new product repository.
-func NewProductRepository(db *sql.DB) *productRepository {
+func NewProductRepository(db *pgx.Conn) *productRepository {
 	return &productRepository{db: db}
 }
 
@@ -30,10 +31,10 @@ func (p *productRepository) CreateProduct(ctx context.Context, product domain.Pr
 	logger.Info().Str("product", fmt.Sprintf("%+v", product)).Msg("insert into products")
 	logger.Debug().Str("query", query).Msg("insert into product")
 
-	res := p.db.QueryRowContext(ctx, query, &product.ID, &product.Name, &product.Description, &product.Media, &product.CreatedAt, &product.CreatedBy)
-	if res.Err() != nil {
-		return domain.Product{}, res.Err()
+	if product.Media == nil {
+		product.Media = []string{} // default array
 	}
+	res := p.db.QueryRow(ctx, query, &product.ID, &product.Name, &product.Description, &product.Media, &product.CreatedAt, &product.CreatedBy)
 
 	var createdProduct domain.Product
 	if err := res.Scan(&createdProduct.ID, &createdProduct.Name, &createdProduct.Description, &createdProduct.Media, &createdProduct.CreatedAt, &createdProduct.CreatedBy); err != nil {
@@ -89,10 +90,7 @@ func (p *productRepository) UpdateProduct(ctx context.Context, productID string,
 	logger.Info().Str("productID", productID).Str("update_data", fmt.Sprintf("%+v", toUpdate)).Msg("update products")
 	logger.Debug().Str("query", query).Msg("update products")
 
-	row := p.db.QueryRowContext(ctx, query, queryValues...)
-	if row.Err() != nil {
-		return domain.Product{}, row.Err()
-	}
+	row := p.db.QueryRow(ctx, query, queryValues...)
 
 	var updatedProduct domain.Product
 	err := row.Scan(&updatedProduct.ID, &updatedProduct.Name, &updatedProduct.Description, &updatedProduct.Media, &updatedProduct.CreatedAt, &updatedProduct.UpdatedAt, &updatedProduct.CreatedBy)
@@ -109,10 +107,7 @@ func (p *productRepository) DeleteProduct(ctx context.Context, productID string,
 
 	logger.Info().Str("product_id", productID).Msg("delete from products")
 	logger.Debug().Str("query", query).Msg("delete from products")
-	row := p.db.QueryRowContext(ctx, query, productID, userID)
-	if row.Err() != nil {
-		return domain.Product{}, row.Err()
-	}
+	row := p.db.QueryRow(ctx, query, productID, userID)
 
 	var deletedProduct domain.Product
 	err := row.Scan(&deletedProduct.ID, &deletedProduct.Name, &deletedProduct.Description, &deletedProduct.Media, &deletedProduct.CreatedAt, &deletedProduct.UpdatedAt, &deletedProduct.CreatedBy)
@@ -130,10 +125,7 @@ func (p *productRepository) FindOne(ctx context.Context, productID string) (doma
 	logger.Info().Str("product_id", productID).Msg("select from products")
 	logger.Debug().Str("query", query).Msg("select from products")
 
-	row := p.db.QueryRowContext(ctx, query, productID)
-	if row.Err() != nil {
-		return domain.Product{}, row.Err()
-	}
+	row := p.db.QueryRow(ctx, query, productID)
 
 	var product domain.Product
 	err := row.Scan(&product.ID, &product.Name, &product.Description, &product.Media, &product.CreatedAt, &product.UpdatedAt, &product.CreatedBy)
@@ -152,16 +144,12 @@ func (p *productRepository) FindAll(ctx context.Context) (products []domain.Prod
 	logger.Info().Msg("select all from products")
 	logger.Debug().Str("query", query).Msg("select all from products")
 
-	var rows *sql.Rows
-	rows, err = p.db.QueryContext(ctx, query)
+	var rows pgx.Rows
+	rows, err = p.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if cErr := rows.Close(); cErr != nil {
-			err = errors.Join(err, cErr)
-		}
-	}()
+	defer rows.Close()
 
 	for rows.Next() {
 		var product domain.Product

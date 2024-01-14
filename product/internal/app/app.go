@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"os/signal"
@@ -18,6 +17,7 @@ import (
 	natsDriverAdapter "github.com/Puena/auction/product/internal/adapters/driver/nats"
 	"github.com/Puena/auction/product/internal/core/service"
 	"github.com/Puena/auction/product/internal/database/postgres"
+	"github.com/jackc/pgx/v5"
 	natsPkg "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"golang.org/x/sync/errgroup"
@@ -48,7 +48,9 @@ func (a *app) Run(ctx context.Context) error {
 		return err
 	}
 	// init database
-	db, err := a.initPostgres()
+	db, err := postgres.ConnextPgx(ctx, postgres.Config{
+		DSN: a.Config.PostgresDSN,
+	})
 	if err != nil {
 		return err
 	}
@@ -77,14 +79,15 @@ func (a *app) Run(ctx context.Context) error {
 
 	// handle signals
 	go func() {
+		ctx := context.Background()
 		select {
 		case <-sigs:
 			logger.Info().Msg("received signal to stop, start terminating...")
-			err := a.gracefulStop(nats, db, httpServer)
+			err := a.gracefulStop(ctx, nats, db, httpServer)
 			done <- err
 		case <-groupCtx.Done():
 			logger.Info().Msg("context done, start terminating...")
-			err := a.gracefulStop(nats, db, httpServer)
+			err := a.gracefulStop(ctx, nats, db, httpServer)
 			done <- err
 		}
 	}()
@@ -104,7 +107,9 @@ func (a *app) Run(ctx context.Context) error {
 
 // RunMigration runs the app database migration, return error if something happened.
 func (a *app) RunMigration() error {
-	db, err := a.initPostgres()
+	db, err := postgres.Connect(postgres.Config{
+		DSN: a.Config.PostgresDSN,
+	})
 	if err != nil {
 		return err
 	}
@@ -133,17 +138,6 @@ func (a *app) initNatsJS() (*natsPkg.Conn, jetstream.JetStream, error) {
 	return nats, js, nil
 }
 
-func (a *app) initPostgres() (*sql.DB, error) {
-	db, err := postgres.Connect(postgres.Config{
-		DSN: a.Config.PostgresDSN,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
 func (a *app) initHttpServer() *http.Server {
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -165,17 +159,19 @@ func (a *app) listenHttpServer(httpServer *http.Server) error {
 	return nil
 }
 
-func (a *app) initConsumers(natsJS jetstream.JetStream, db *sql.DB) *natsDriverAdapter.ProductStreamConsumer {
+func (a *app) initConsumers(natsJS jetstream.JetStream, db *pgx.Conn) *natsDriverAdapter.ProductStreamConsumer {
 	productRepo := pgDrivenAdapter.NewProductRepository(db)
 	natsPublishRepo := natsDrivenAdapter.NewPublishEventRepository(natsJS, natsDrivenAdapter.Config{
-		ProductStreamHeaderAuthUserID: a.Config.NatsHeaderAuthUserID,
-		ProductStreamHeaderOccuredAt:  a.Config.NatsHeaderOccuredAt,
-		SubjectEventProductCreated:    a.Config.SubjectEventProductCreated,
-		SubjectEventProductUpdated:    a.Config.SubjectEventProductUpdated,
-		SubjectEventProductDeleted:    a.Config.SubjectEventProductDeleted,
-		SubjectEventProductFound:      a.Config.SubjectEventProductFound,
-		SubjectEventProductsFound:     a.Config.SubjectEventProductFound,
-		SubjectEventProductError:      a.Config.SubjectEventProductError,
+		ProductStreamHeaderMsgID:        a.Config.NatsHeaderMsgID,
+		ProductStreamHeaderReplyToMsgID: a.Config.NatsHeaderReplyToMsgID,
+		ProductStreamHeaderAuthUserID:   a.Config.NatsHeaderAuthUserID,
+		ProductStreamHeaderOccuredAt:    a.Config.NatsHeaderOccuredAt,
+		SubjectEventProductCreated:      a.Config.SubjectEventProductCreated,
+		SubjectEventProductUpdated:      a.Config.SubjectEventProductUpdated,
+		SubjectEventProductDeleted:      a.Config.SubjectEventProductDeleted,
+		SubjectEventProductFound:        a.Config.SubjectEventProductFound,
+		SubjectEventProductsFound:       a.Config.SubjectEventProductFound,
+		SubjectEventProductError:        a.Config.SubjectEventProductError,
 	})
 	services := service.NewProductService(productRepo, natsPublishRepo)
 	consumers := natsDriverAdapter.NewProductStreamConsumer(natsJS, services, natsDriverAdapter.Config{
@@ -215,12 +211,12 @@ func (a *app) listenErrGroup(errGroup *errgroup.Group) error {
 	return nil
 }
 
-func (a *app) gracefulStop(nats *natsPkg.Conn, db *sql.DB, pprofServer *http.Server) error {
+func (a *app) gracefulStop(ctx context.Context, nats *natsPkg.Conn, db *pgx.Conn, pprofServer *http.Server) error {
 	if err := nats.Drain(); err != nil {
 		return fmt.Errorf("drain nats connection error: %w", err)
 	}
 
-	if err := db.Close(); err != nil {
+	if err := db.Close(ctx); err != nil {
 		return fmt.Errorf("close db connection error: %w", err)
 	}
 

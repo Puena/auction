@@ -607,6 +607,7 @@ Product message represent a product.
 | description | [string](#string) |  |  |
 | created_by | [string](#string) |  | it is user id. |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 

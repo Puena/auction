@@ -1,10 +1,12 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
@@ -50,6 +52,24 @@ func Connect(conf Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("error connecting to postgres: %w", err)
 	}
 	return s, nil
+}
+
+func ConnextPgx(ctx context.Context, conf Config) (*pgx.Conn, error) {
+	if err := conf.Validate(); err != nil {
+		return nil, err
+	}
+
+	c, err := pgx.Connect(ctx, conf.DSN)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.Ping(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to postgres: %w", err)
+	}
+
+	return c, nil
 }
 
 // UpMigration run postgres migration.

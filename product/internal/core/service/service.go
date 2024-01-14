@@ -155,39 +155,39 @@ func (s *productService) FindProducts(ctx context.Context, authUserID string, da
 }
 
 // PublishEventProductCreated publish event product created.
-func (s *productService) PublishEventProductCreated(ctx context.Context, authUserID string, product dto.Product) error {
+func (s *productService) PublishEventProductCreated(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error {
 	eventKey := fmt.Sprintf("%s_%s", eventKeyPrefixProductCreated, product.ID)
 	event := domain.NewEventProductCreated(eventKey, mapProductDtoToDomain(product))
 
-	return s.publish.ProductCreated(ctx, authUserID, event)
+	return s.publish.ProductCreated(ctx, authUserID, event, replyToMsgID)
 }
 
 // PublishEventProductUpdated publish event product updated.
-func (s *productService) PublishEventProductUpdated(ctx context.Context, authUserID string, product dto.Product) error {
+func (s *productService) PublishEventProductUpdated(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error {
 	eventKey := fmt.Sprintf("%s_%s_%s", eventKeyPrefixProductUpdated, product.ID, product.UpdatedAt)
 	event := domain.NewEventProductUpdated(eventKey, mapProductDtoToDomain(product))
 
-	return s.publish.ProductUpdated(ctx, authUserID, event)
+	return s.publish.ProductUpdated(ctx, authUserID, event, replyToMsgID)
 }
 
 // PublishEventProductDeleted publish event product deleted.
-func (s *productService) PublishEventProductDeleted(ctx context.Context, authUserID string, product dto.Product) error {
+func (s *productService) PublishEventProductDeleted(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error {
 	eventKey := fmt.Sprintf("%s_%s", eventKeyPrefixProductDeleted, product.ID)
 	event := domain.NewEventProductDeleted(eventKey, mapProductDtoToDomain(product))
 
-	return s.publish.ProductDeleted(ctx, authUserID, event)
+	return s.publish.ProductDeleted(ctx, authUserID, event, replyToMsgID)
 }
 
 // PublishEventProductFound publish event product found.
-func (s *productService) PublishEventProductFound(ctx context.Context, authUserID string, product dto.Product) error {
+func (s *productService) PublishEventProductFound(ctx context.Context, authUserID string, product dto.Product, replyToMsgID string) error {
 	eventKey := fmt.Sprintf("%s_%s", eventKeyPrefixProductFound, ulid.Make().String())
 	event := domain.NewEventProductFound(eventKey, mapProductDtoToDomain(product))
 
-	return s.publish.ProductFound(ctx, authUserID, event)
+	return s.publish.ProductFound(ctx, authUserID, event, replyToMsgID)
 }
 
 // PublishEventProductsFound publish event products found.
-func (s *productService) PublishEventProductsFound(ctx context.Context, authUserID string, products []dto.Product) error {
+func (s *productService) PublishEventProductsFound(ctx context.Context, authUserID string, products []dto.Product, replyToMsgID string) error {
 	var domainProducts []domain.Product
 	for _, product := range products {
 		domainProducts = append(domainProducts, mapProductDtoToDomain(product))
@@ -196,14 +196,14 @@ func (s *productService) PublishEventProductsFound(ctx context.Context, authUser
 	eventKey := fmt.Sprintf("%s_%s", eventKeyPrefixProductsFound, ulid.Make().String())
 	event := domain.NewEventProductsFound(eventKey, domainProducts)
 
-	return s.publish.ProductsFound(ctx, authUserID, event)
+	return s.publish.ProductsFound(ctx, authUserID, event, replyToMsgID)
 }
 
 // PublishProductError publish event product error.
-func (s *productService) PublishEventProductError(ctx context.Context, authUserID string, productError dto.ProductEventError) error {
+func (s *productService) PublishEventProductError(ctx context.Context, authUserID string, productError dto.ProductEventError, replyToMsgID string) error {
 	eventKey := fmt.Sprintf("%s_%s_%d", eventKeyPrefixEventError, productError.Reference_event_key, productError.Time.UnixMicro())
 
-	return s.publish.ProductError(ctx, authUserID, domain.NewEventProductError(eventKey, mapDtoInternalEventErrorToDomain(productError)))
+	return s.publish.ProductError(ctx, authUserID, domain.NewEventProductError(eventKey, mapDtoInternalEventErrorToDomain(productError)), replyToMsgID)
 }
 
 // ValidationError returns true if the error is a service validation error.
