@@ -81,6 +81,7 @@ func (s *productService) UpdateProduct(ctx context.Context, authUserID string, d
 		Name:        data.Value.Name,
 		Description: data.Value.Description,
 		Media:       data.Value.Media,
+		UpdatedAt:   time.Now(),
 	}
 
 	// save updated product to the database

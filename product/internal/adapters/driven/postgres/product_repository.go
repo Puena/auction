@@ -53,7 +53,7 @@ func (p *productRepository) UpdateProduct(ctx context.Context, productID string,
 		return len(queryValues) + 1
 	}
 	insertComma := func() {
-		if len(queryValues) > 1 {
+		if len(queryValues) > 0 {
 			queryBuilder.WriteString(",")
 		}
 	}
@@ -79,10 +79,10 @@ func (p *productRepository) UpdateProduct(ctx context.Context, productID string,
 		queryBuilder.WriteString(fmt.Sprintf(" updated_at = $%d", getLastValuePosition()))
 		queryValues = append(queryValues, toUpdate.UpdatedAt)
 	}
-	queryValues = append(queryValues, productID)
 	queryBuilder.WriteString(fmt.Sprintf(" WHERE id = $%d", getLastValuePosition()))
-	queryValues = append(queryValues, userID)
+	queryValues = append(queryValues, productID)
 	queryBuilder.WriteString(fmt.Sprintf(" AND created_by = $%d", getLastValuePosition()))
+	queryValues = append(queryValues, userID)
 	queryBuilder.WriteString(" RETURNING id, name, description, media, created_at, updated_at, created_by")
 	// Done building query.
 	query := queryBuilder.String()

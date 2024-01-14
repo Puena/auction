@@ -18,9 +18,11 @@ func mapCommandCreateProductToDto(msg *auction.CommandCreateProduct) dto.Command
 
 func mapCommandUpdateProductToDto(msg *auction.CommandUpdateProduct) dto.CommandUpdateProduct {
 	value := dto.UpdateProduct{
+		ID:          msg.Value.Id,
 		Name:        msg.Value.Name,
 		Description: msg.Value.Description,
 		Media:       msg.Value.Media,
+		CreatedBy:   msg.Value.CreatedBy,
 	}
 	return dto.NewCommandUpdateProduct(msg.Key, value)
 }
@@ -32,6 +34,7 @@ func mapDomainProductToDto(product domain.Product) dto.Product {
 		Description: product.Description,
 		Media:       product.Media,
 		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 		CreatedBy:   product.CreatedBy,
 	}
 }

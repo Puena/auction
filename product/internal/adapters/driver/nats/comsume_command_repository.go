@@ -113,9 +113,9 @@ func (r *ProductStreamConsumer) ConsumeCreateProductCommand(ctx context.Context)
 	}
 
 	// start consuming messages from subject
-	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleCreateProductCommand))
+	_, err = c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleCreateProductCommand))
 
-	return nil
+	return err
 }
 
 func (r *ProductStreamConsumer) handleCreateProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
@@ -159,9 +159,9 @@ func (r *ProductStreamConsumer) ConsumeUpdateProductCommand(ctx context.Context)
 	}
 
 	// start consuming messages from subject
-	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleUpdateProductCommand))
+	_, err = c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleUpdateProductCommand))
 
-	return nil
+	return err
 }
 
 func (r *ProductStreamConsumer) handleUpdateProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
@@ -205,9 +205,9 @@ func (r *ProductStreamConsumer) ConsumeDeleteProductCommand(ctx context.Context)
 	}
 
 	// start consuming messages from subject
-	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleDeleteProductCommand))
+	_, err = c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleDeleteProductCommand))
 
-	return nil
+	return err
 }
 
 func (r *ProductStreamConsumer) handleDeleteProductCommand(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
@@ -251,9 +251,9 @@ func (r *ProductStreamConsumer) ConsumeFindProductQuery(ctx context.Context) err
 	}
 
 	// start consuming messages from subject
-	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleFindProductQuery))
+	_, err = c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleFindProductQuery))
 
-	return nil
+	return err
 }
 
 func (r *ProductStreamConsumer) handleFindProductQuery(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
@@ -297,9 +297,9 @@ func (r *ProductStreamConsumer) ConsumeFindProductsQuery(ctx context.Context) er
 	}
 
 	// start consuming messages from subject
-	c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleFindProductsQuery))
+	_, err = c.Consume(r.consumeHandler(ctx, consumerConfig.Name, r.handleFindProductsQuery))
 
-	return nil
+	return err
 }
 
 func (r *ProductStreamConsumer) handleFindProductsQuery(ctx context.Context, consumerName string, m jetstream.Msg) *dto.ProductEventError {
@@ -356,7 +356,6 @@ func (r *ProductStreamConsumer) consumeHandler(ctx context.Context, consumerName
 				return
 			}
 		}
-
 	}
 }
 

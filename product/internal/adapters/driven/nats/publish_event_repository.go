@@ -121,15 +121,8 @@ func (p *publishEventRepository) publishToNatsJetStream(subject string, headers 
 // Publish event product created, userID is who initiated this action.
 func (p *publishEventRepository) ProductCreated(ctx context.Context, userID string, event domain.EventProductCreated, replyTo string) error {
 	protoMsg := &auction.EventProductCreated{
-		Key: event.Key,
-		Value: &auction.Product{
-			Id:          event.Value.ID,
-			Name:        event.Value.Name,
-			Media:       event.Value.Media,
-			Description: event.Value.Description,
-			CreatedBy:   event.Value.CreatedBy,
-			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
-		},
+		Key:   event.Key,
+		Value: mapProductToProto(event.Value),
 	}
 
 	hOpts := &headerOpts{
@@ -150,16 +143,8 @@ func (p *publishEventRepository) ProductCreated(ctx context.Context, userID stri
 // Publish event product updated, userID is who initiated this action.
 func (p *publishEventRepository) ProductUpdated(ctx context.Context, userID string, event domain.EventProductUpdated, replyToMsgID string) error {
 	protoMsg := &auction.EventProductUpdated{
-		Key: event.Key,
-		Value: &auction.Product{
-			Id:          event.Value.ID,
-			Name:        event.Value.Name,
-			Media:       event.Value.Media,
-			Description: event.Value.Description,
-			CreatedBy:   event.Value.CreatedBy,
-			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
-			UpdatedAt:   timestamppb.New(event.Value.UpdatedAt),
-		},
+		Key:   event.Key,
+		Value: mapProductToProto(event.Value),
 	}
 
 	hOpts := headerOpts{
@@ -180,16 +165,8 @@ func (p *publishEventRepository) ProductUpdated(ctx context.Context, userID stri
 // Publish event product deleted, userID is who initiated this action.
 func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID string, event domain.EventProductDeleted, replyToMsgID string) error {
 	protoMsg := &auction.EventProductDeleted{
-		Key: event.Key,
-		Value: &auction.Product{
-			Id:          event.Value.ID,
-			Name:        event.Value.Name,
-			Media:       event.Value.Media,
-			Description: event.Value.Description,
-			CreatedBy:   event.Value.CreatedBy,
-			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
-			UpdatedAt:   timestamppb.New(event.Value.UpdatedAt),
-		},
+		Key:   event.Key,
+		Value: mapProductToProto(event.Value),
 	}
 
 	hOpts := headerOpts{
@@ -209,15 +186,8 @@ func (p *publishEventRepository) ProductDeleted(ctx context.Context, userID stri
 // Publish event product found, userID is who initiated this action, if found nothing empty array returns.
 func (p *publishEventRepository) ProductFound(ctx context.Context, userID string, event domain.EventProductFound, replyToMsgID string) error {
 	protoMsg := &auction.EventProductFound{
-		Key: event.Key,
-		Value: &auction.Product{
-			Id:          event.Value.ID,
-			Name:        event.Value.Name,
-			Media:       event.Value.Media,
-			Description: event.Value.Description,
-			CreatedBy:   event.Value.CreatedBy,
-			CreatedAt:   timestamppb.New(event.Value.CreatedAt),
-		},
+		Key:   event.Key,
+		Value: mapProductToProto(event.Value),
 	}
 
 	hOpts := headerOpts{
@@ -242,7 +212,7 @@ func (p *publishEventRepository) ProductsFound(ctx context.Context, userID strin
 		Value: []*auction.Product{},
 	}
 	for _, ep := range event.Value {
-		protoMsg.Value = append(protoMsg.Value, eventProductToProtoProduct(ep))
+		protoMsg.Value = append(protoMsg.Value, mapProductToProto(ep))
 	}
 
 	hOpts := headerOpts{

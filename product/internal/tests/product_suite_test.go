@@ -132,7 +132,6 @@ func (s *ProductTestSuite) publishToProductStream(ctx context.Context, subject s
 
 func (s *ProductTestSuite) listenProductStreamEvent(ctx context.Context, subject string) (jetstream.Consumer, error) {
 	c, err := s.productStream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		Name:          "product-stream-test-consumer",
 		DeliverPolicy: jetstream.DeliverNewPolicy,
 		AckPolicy:     jetstream.AckExplicitPolicy,
 		FilterSubject: subject,
@@ -157,7 +156,7 @@ func (s *ProductTestSuite) TestCRUDCommands() {
 	// create consumer from product created events
 	c, err := s.listenProductStreamEvent(context.Background(), natsSubjectEventProductCreated)
 	s.Assert().NoError(err, "error creating nats consumer")
-	found := make(chan *auction.EventProductCreated, 1)
+	found := make(chan protoreflect.ProtoMessage, 1)
 	productCreatedConsumer, err := c.Consume(func(msg jetstream.Msg) {
 		err := msg.Ack()
 		s.Assert().NoError(err, "error acking nats message")
@@ -185,11 +184,14 @@ func (s *ProductTestSuite) TestCRUDCommands() {
 		found <- created
 	})
 	s.Assert().NoError(err, "error consuming nats stream")
+	defer productCreatedConsumer.Stop()
 
 	_, err = s.publishToProductStream(context.Background(), natsSubjectCommandCreateProduct, userID, createProductCommand.Key, createProductCommand)
 	s.Assert().NoError(err, "error publishing to nats")
 
-	createdProduct := <-found
+	entity := <-found
+	createdProduct, ok := entity.(*auction.EventProductCreated)
+	s.Assert().True(ok, "entity should be of type EventProductCreated")
 
 	// update product
 	commandUpdateProduct := &auction.CommandUpdateProduct{
@@ -201,17 +203,139 @@ func (s *ProductTestSuite) TestCRUDCommands() {
 		},
 	}
 
-	productUpdatedConsumer, err := s.listenProductStreamEvent(context.Background(), natsSubjectEventProductUpdated)
-	productUpdatedConsumer.Consume(func(msg jetstream.Msg) {
+	epu, err := s.listenProductStreamEvent(context.Background(), natsSubjectEventProductUpdated)
+	s.Assert().NoError(err, "error creating nats consumer")
+	productUpdatedConsumer, err := epu.Consume(func(msg jetstream.Msg) {
 		err := msg.Ack()
 		s.Assert().NoError(err, "error acking nats message")
 
 		s.assertMsgHeaders(msg)
+		replyMsgID := msg.Headers().Get(natsHeaderReplyToMsgID)
+		if replyMsgID != commandUpdateProduct.Key {
+			return // this can be possible if test run in parallel
+		}
+
+		// get data
+		updated := &auction.EventProductUpdated{}
+		err = proto.Unmarshal(msg.Data(), updated)
+		s.Assert().NoError(err, "error unmarshaling data")
+
+		// Assert
+		s.Assert().Equal(commandUpdateProduct.Value.Id, updated.Value.Id, "id should be the same")
+		s.Assert().Equal(commandUpdateProduct.Value.Media, updated.Value.Media, "media should be the same")
+		s.Assert().Equal(commandUpdateProduct.Value.CreatedBy, updated.Value.CreatedBy, "created by should be the same")
+		s.Assert().Equal(createdProduct.Value.Name, updated.Value.Name, "name should be the same")
+		s.Assert().Equal(createdProduct.Value.CreatedBy, updated.Value.CreatedBy, "created should be the same as userID")
+		s.Assert().Equal(createdProduct.Value.CreatedAt, updated.Value.CreatedAt, "created at should be the same")
+		s.Assert().NotEmpty(updated.Value.UpdatedAt, "updated at should not be empty")
+
+		found <- updated
 	})
+	s.Assert().NoError(err, "error consuming nats stream")
+	defer productUpdatedConsumer.Stop()
 
-	updatedProduct := <-found
+	_, err = s.publishToProductStream(context.Background(), natsSubjectCommandUpdateProduct, userID, commandUpdateProduct.Key, commandUpdateProduct)
+	s.Assert().NoError(err, "error publishing update command to nats")
 
-	productCreatedConsumer.Stop()
+	entity = <-found
+	updatedProduct, ok := entity.(*auction.EventProductUpdated)
+	s.Assert().True(ok, "entity should be of type EventProductUpdated")
+
+	// found query
+	query := &auction.QueryFindProduct{
+		Key: ulid.Make().String(),
+		Value: &auction.FindProduct{
+			Id: createdProduct.Value.Id,
+		},
+	}
+
+	epf, err := s.listenProductStreamEvent(context.Background(), natsSubjectEventProductFound)
+	s.Assert().NoError(err, "error creating nats consumer")
+
+	productFoundConsumer, err := epf.Consume(func(msg jetstream.Msg) {
+		err := msg.Ack()
+		s.Assert().NoError(err, "error acking nats message")
+
+		s.assertMsgHeaders(msg)
+		replyMsgID := msg.Headers().Get(natsHeaderReplyToMsgID)
+		if replyMsgID != query.Key {
+			return // this can be possible if test run in parallel
+		}
+
+		// get data
+		productFounded := &auction.EventProductFound{}
+		err = proto.Unmarshal(msg.Data(), productFounded)
+		s.Assert().NoError(err, "error unmarshaling data")
+
+		// Assert
+		s.Assert().Equal(query.Value.Id, productFounded.Value.Id, "id should be the same")
+		s.Assert().Equal(updatedProduct.Value.Name, productFounded.Value.Name, "name should be the same")
+		s.Assert().Equal(updatedProduct.Value.Description, productFounded.Value.Description, "description should be the same")
+		s.Assert().Equal(updatedProduct.Value.Media, productFounded.Value.Media, "media should be the same")
+		s.Assert().Equal(updatedProduct.Value.CreatedBy, productFounded.Value.CreatedBy, "created by should be the same")
+		s.Assert().Equal(updatedProduct.Value.CreatedAt, productFounded.Value.CreatedAt, "created at should be the same")
+		s.Assert().Equal(updatedProduct.Value.UpdatedAt, productFounded.Value.UpdatedAt, "updated at should be the same")
+
+		found <- productFounded
+	})
+	s.Assert().NoError(err, "error consuming nats stream")
+	defer productFoundConsumer.Stop()
+
+	_, err = s.publishToProductStream(context.Background(), natsSubjectQueryFindProduct, userID, query.Key, query)
+	s.Assert().NoError(err, "error publishing query to nats")
+
+	entity = <-found
+	foundedProduct, ok := entity.(*auction.EventProductFound)
+	s.Assert().True(ok, "entity should be of type EventProductFound")
+
+	// delete product
+	commandDeleteProduct := &auction.CommandDeleteProduct{
+		Key: ulid.Make().String(),
+		Value: &auction.DeleteProduct{
+			Id:        foundedProduct.Value.Id,
+			CreatedBy: foundedProduct.Value.CreatedBy,
+		},
+	}
+
+	epd, err := s.listenProductStreamEvent(context.Background(), natsSubjectEventProductDeleted)
+	s.Assert().NoError(err, "error creating nats consumer")
+	productDeletedConsumer, err := epd.Consume(func(msg jetstream.Msg) {
+		err := msg.Ack()
+		s.Assert().NoError(err, "error acking nats message")
+
+		s.assertMsgHeaders(msg)
+		replyMsgID := msg.Headers().Get(natsHeaderReplyToMsgID)
+		if replyMsgID != commandDeleteProduct.Key {
+			return // this can be possible if test run in parallel
+		}
+
+		// get data
+		deleted := &auction.EventProductDeleted{}
+		err = proto.Unmarshal(msg.Data(), deleted)
+		s.Assert().NoError(err, "error unmarshaling data")
+
+		// Assert
+		s.Assert().Equal(commandDeleteProduct.Value.Id, deleted.Value.Id, "id should be the same")
+		s.Assert().Equal(commandDeleteProduct.Value.CreatedBy, deleted.Value.CreatedBy, "created by should be the same")
+		s.Assert().Equal(foundedProduct.Value.Name, deleted.Value.Name, "name should be the same")
+		s.Assert().Equal(foundedProduct.Value.Description, deleted.Value.Description, "description should be the same")
+		s.Assert().Equal(foundedProduct.Value.Media, deleted.Value.Media, "media should be the same")
+		s.Assert().Equal(foundedProduct.Value.CreatedBy, deleted.Value.CreatedBy, "created by should be the same")
+		s.Assert().Equal(foundedProduct.Value.CreatedAt, deleted.Value.CreatedAt, "created at should be the same")
+		s.Assert().Equal(foundedProduct.Value.UpdatedAt, deleted.Value.UpdatedAt, "updated at should be the same")
+
+		found <- deleted
+	})
+	s.Assert().NoError(err, "error consuming nats stream")
+	defer productDeletedConsumer.Stop()
+
+	_, err = s.publishToProductStream(context.Background(), natsSubjectCommandDeleteProduct, userID, commandDeleteProduct.Key, commandDeleteProduct)
+	s.Assert().NoError(err, "error publishing delete command to nats")
+
+	entity = <-found
+	deletedProduct, ok := entity.(*auction.EventProductDeleted)
+	s.Assert().True(ok, "entity should be of type EventProductDeleted")
+	fmt.Println(deletedProduct)
 }
 
 func (s *ProductTestSuite) assertMsgHeaders(msg jetstream.Msg) {

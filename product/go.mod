@@ -78,3 +78,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/grpc v1.60.1
 )
+
+replace github.com/Puena/auction/pbgo => ../pbgo
+
+replace github.com/Puena/auction/logger => ../logger

@@ -12,6 +12,7 @@ func mapProductDtoToDomain(product dto.Product) domain.Product {
 		Description: product.Description,
 		Media:       product.Media,
 		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 		CreatedBy:   product.CreatedBy,
 	}
 }
@@ -23,6 +24,7 @@ func mapDomainProductToDto(product domain.Product) dto.Product {
 		Description: product.Description,
 		Media:       product.Media,
 		CreatedAt:   product.CreatedAt,
+		UpdatedAt:   product.UpdatedAt,
 		CreatedBy:   product.CreatedBy,
 	}
 }

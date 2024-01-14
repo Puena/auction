@@ -14,10 +14,6 @@ github.com/Microsoft/hcsshim v0.11.4 h1:68vKo2VN8DE9AdN4tnkWnmdhqdbpUFM8OF3Airm7
 github.com/Microsoft/hcsshim v0.11.4/go.mod h1:smjE4dvqPX9Zldna+t5FG3rnoHhaB7QYxPRqGcpAD9w=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
-github.com/Puena/auction/logger v0.0.0-20240111215305-3ea6cacabcd3 h1:05ULeNhWm5ME/sWmYpe7j+hksftJGSUEhsnjoap37ME=
-github.com/Puena/auction/logger v0.0.0-20240111215305-3ea6cacabcd3/go.mod h1:5BpjOlkPj6T9ZfuUgd6kdOjssIxHzEHYe6Poylq7JRY=
-github.com/Puena/auction/pbgo v0.0.0-20240113133408-2623a78f10ce h1:6LmwmWnHHK3QucaV1jGuO3bR1RvREllW2E2UGRiczU0=
-github.com/Puena/auction/pbgo v0.0.0-20240113133408-2623a78f10ce/go.mod h1:dXqWDfTqUTooxVI+r7rDLu5C3pXhLocsuCINbOevc+w=
 github.com/andybalholm/brotli v1.0.6 h1:Yf9fFpf49Zrxb9NlQaluyE92/+X7UVHlhMNJN2sxfOI=
 github.com/andybalholm/brotli v1.0.6/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/caarlos0/env/v10 v10.0.0 h1:yIHUBZGsyqCnpTkbjk8asUlx6RFhhEs+h7TOBdgdzXA=
